@@ -35,8 +35,8 @@ class OpsGenieAlerter(Alerter):
     def _parse_responders(self, responders, responder_args, matches, default_responders):
         if responder_args:
             formated_responders = list()
-            responders_values = dict((k, lookup_es_key(matches[0], v)) for k, v in responder_args.iteritems())
-            responders_values = dict((k, v) for k, v in responders_values.iteritems() if v)
+            responders_values = dict((k, lookup_es_key(matches[0], v)) for k, v in responder_args.items())
+            responders_values = dict((k, v) for k, v in responders_values.items() if v)
 
             for responder in responders:
                 responder = unicode(responder)

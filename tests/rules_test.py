@@ -195,7 +195,7 @@ def test_eventwindow():
     for ts in timestamps:
         window.append([{'@timestamp': ts}, 1])
 
-    timestamps.sort()
+    sorted(timestamps)
     for exp, actual in zip(timestamps[1:], window.data):
         assert actual[0]['@timestamp'] == exp
 

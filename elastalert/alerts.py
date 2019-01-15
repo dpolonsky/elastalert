@@ -11,7 +11,8 @@ import uuid
 import warnings
 from email.mime.text import MIMEText
 from email.utils import formatdate
-from HTMLParser import HTMLParser
+# from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 from smtplib import SMTP
 from smtplib import SMTP_SSL
 from smtplib import SMTPAuthenticationError
@@ -40,6 +41,7 @@ from util import pretty_ts
 from util import resolve_string
 from util import ts_now
 from util import ts_to_dt
+from util import unicode, basestring
 
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -107,7 +109,7 @@ class BasicMatchString(object):
                 if not top_events:
                     self.text += 'No events found.\n'
                 else:
-                    top_events.sort(key=lambda x: x[1], reverse=True)
+                    sorted(top_events, key=lambda x: x[1], reverse=True)
                     for term, count in top_events:
                         self.text += '%s: %s\n' % (term, count)
 
@@ -115,7 +117,7 @@ class BasicMatchString(object):
 
     def _add_match_items(self):
         match_items = self.match.items()
-        match_items.sort(key=lambda x: x[0])
+        sorted(match_items, key=lambda x: x[0])
         for key, value in match_items:
             if key.startswith('top_events_'):
                 continue
@@ -186,7 +188,7 @@ class Alerter(object):
                     root[i] = self.resolve_rule_reference(item)
         elif type(root) == dict:
             # Make a copy since we may be modifying the contents of the structure we're walking
-            for key, value in root.copy().iteritems():
+            for key, value in root.copy().items():
                 if type(value) == dict or type(value) == list:
                     self.resolve_rule_references(root[key])
                 else:
@@ -285,7 +287,7 @@ class Alerter(object):
                     match_aggregation[key_tuple] = 1
                 else:
                     match_aggregation[key_tuple] = match_aggregation[key_tuple] + 1
-            for keys, count in match_aggregation.iteritems():
+            for keys, count in match_aggregation.items():
                 text_table.add_row([key for key in keys] + [count])
             text += text_table.draw() + '\n\n'
             text += self.rule.get('summary_prefix', '')
@@ -593,7 +595,7 @@ class JiraAlerter(Alerter):
             self.get_arbitrary_fields()
         except JIRAError as e:
             # JIRAError may contain HTML, pass along only first 1024 chars
-            raise EAException("Error connecting to JIRA: %s" % (str(e)[:1024])), None, sys.exc_info()[2]
+            raise EAException("Error connecting to JIRA: %s" % (str(e)[:1024]))# , None, sys.exc_info()[2]
 
         self.set_priority()
 
@@ -696,7 +698,7 @@ class JiraAlerter(Alerter):
         # Clear jira_args
         self.reset_jira_args()
 
-        for jira_field, value in self.rule.iteritems():
+        for jira_field, value in self.rule.items():
             # If we find a field that is not covered by the set that we are aware of, it means it is either:
             # 1. A built-in supported field in JIRA that we don't have on our radar
             # 2. A custom field that a JIRA admin has configured
@@ -827,7 +829,7 @@ class JiraAlerter(Alerter):
                             "Exception encountered when trying to add '{0}' as a watcher. Does the user exist?\n{1}" .format(
                                 watcher,
                                 ex
-                            )), None, sys.exc_info()[2]
+                            ))# , None, sys.exc_info()[2]
 
         except JIRAError as e:
             raise EAException("Error creating JIRA ticket using jira_args (%s): %s" % (self.jira_args, e))
@@ -1148,7 +1150,7 @@ class SlackAlerter(Alerter):
     def alert(self, matches):
         body = self.create_alert_body(matches)
 
-        body = self.format_body(body)
+        # body = self.format_body(body)
         # post to slack
         headers = {'content-type': 'application/json'}
         # set https proxy, if it was provided
@@ -1370,7 +1372,7 @@ class PagerDutyAlerter(Alerter):
                                                          matches),
                     'summary': self.create_title(matches),
                     'custom_details': {
-                        'information': body.encode('UTF-8'),
+                        'information': body,
                     },
                 },
             }
@@ -1382,7 +1384,7 @@ class PagerDutyAlerter(Alerter):
                 'incident_key': self.get_incident_key(matches),
                 'client': self.pagerduty_client_name,
                 'details': {
-                    "information": body.encode('UTF-8'),
+                    "information": body,
                 },
             }
 
@@ -1498,7 +1500,7 @@ class ExotelAlerter(Alerter):
             if response != 200:
                 raise EAException("Error posting to Exotel, response code is %s" % response)
         except RequestException:
-            raise EAException("Error posting to Exotel"), None, sys.exc_info()[2]
+            raise EAException("Error posting to Exotel")# , None, sys.exc_info()[2]
         elastalert_logger.info("Trigger sent to Exotel")
 
     def get_info(self):
@@ -2108,7 +2110,7 @@ class HiveAlerter(Alerter):
 
             artifacts = []
             for mapping in self.rule.get('hive_observable_data_mapping', []):
-                for observable_type, match_data_key in mapping.iteritems():
+                for observable_type, match_data_key in mapping.items():
                     try:
                         if match_data_key.replace("{match[", "").replace("]}", "") in context['match']:
                             artifacts.append(AlertArtifact(dataType=observable_type, data=match_data_key.format(**context)))
@@ -2122,7 +2124,7 @@ class HiveAlerter(Alerter):
             }
             alert_config.update(self.rule.get('hive_alert_config', {}))
 
-            for alert_config_field, alert_config_value in alert_config.iteritems():
+            for alert_config_field, alert_config_value in alert_config.items():
                 if isinstance(alert_config_value, basestring):
                     alert_config[alert_config_field] = alert_config_value.format(**context)
                 elif isinstance(alert_config_value, (list, tuple)):

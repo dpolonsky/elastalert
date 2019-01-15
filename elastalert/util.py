@@ -15,6 +15,14 @@ logging.basicConfig()
 elastalert_logger = logging.getLogger('elastalert')
 
 
+try:
+    unicode = unicode
+except NameError:
+    # 'unicode' is undefined, must be Python 3
+    unicode = str
+    basestring = (str,bytes)
+
+
 def new_get_event_ts(ts_field):
     """ Constructs a lambda that may be called to extract the timestamp field
     from a given event.
@@ -290,8 +298,8 @@ def elasticsearch_client(conf):
                                      aws_region=es_conn_conf['aws_region'],
                                      profile_name=es_conn_conf['profile'])
 
-    return Elasticsearch(host=es_conn_conf['es_host'],
-                         port=es_conn_conf['es_port'],
+    # port=es_conn_conf['es_port'],
+    return Elasticsearch(hosts=es_conn_conf['es_host'],
                          url_prefix=es_conn_conf['es_url_prefix'],
                          use_ssl=es_conn_conf['use_ssl'],
                          verify_certs=es_conn_conf['verify_certs'],

@@ -48,7 +48,7 @@ from util import ts_add
 from util import ts_now
 from util import ts_to_dt
 from util import unix_to_dt
-
+from util import unicode, basestring
 
 class ElastAlerter():
     """ The main ElastAlert runner. This class holds all state about active rules,
@@ -575,7 +575,7 @@ class ElastAlerter():
         buffer_time = rule.get('buffer_time', self.buffer_time)
         if rule.get('query_delay'):
             buffer_time += rule['query_delay']
-        for _id, timestamp in rule['processed_hits'].iteritems():
+        for _id, timestamp in rule['processed_hits'].items():
             if now - timestamp > buffer_time:
                 remove.append(_id)
         map(rule['processed_hits'].pop, remove)
@@ -818,7 +818,7 @@ class ElastAlerter():
         """
         run_start = time.time()
         self.current_es = elasticsearch_client(rule)
-        self.current_es_addr = (rule['es_host'], rule['es_port'])
+        self.current_es_addr = rule['es_host']
 
         # If there are pending aggregate matches, try processing them
         for x in range(len(rule['agg_matches'])):
@@ -1012,7 +1012,7 @@ class ElastAlerter():
         new_rule_hashes = get_rule_hashes(self.conf, self.args.rule)
 
         # Check each current rule for changes
-        for rule_file, hash_value in self.rule_hashes.iteritems():
+        for rule_file, hash_value in self.rule_hashes.items():
             if rule_file not in new_rule_hashes:
                 # Rule file was deleted
                 elastalert_logger.info('Rule file %s not found, stopping rule execution' % (rule_file))
@@ -1296,7 +1296,7 @@ class ElastAlerter():
         try:
             res = es.search(index='kibana-int', doc_type='dashboard', body=query, _source_include=['dashboard'])
         except ElasticsearchException as e:
-            raise EAException("Error querying for dashboard: %s" % (e)), None, sys.exc_info()[2]
+            raise EAException("Error querying for dashboard: %s" % e) # , None, sys.exc_info()[2]
 
         if res['hits']['hits']:
             return json.loads(res['hits']['hits'][0]['_source']['dashboard'])
@@ -1547,7 +1547,7 @@ class ElastAlerter():
 
             # Set current_es for top_count_keys query
             self.current_es = elasticsearch_client(rule)
-            self.current_es_addr = (rule['es_host'], rule['es_port'])
+            self.current_es_addr = rule['es_host']
 
             # Send the alert unless it's a future alert
             if ts_now() > ts_to_dt(alert_time):
@@ -1563,7 +1563,7 @@ class ElastAlerter():
                     self.alert([match_body], rule, alert_time=alert_time, retried=retried)
 
                 if rule['current_aggregate_id']:
-                    for qk, agg_id in rule['current_aggregate_id'].iteritems():
+                    for qk, agg_id in rule['current_aggregate_id'].items():
                         if agg_id == _id:
                             rule['current_aggregate_id'].pop(qk)
                             break
@@ -1579,7 +1579,7 @@ class ElastAlerter():
         # Send in memory aggregated alerts
         for rule in self.rules:
             if rule['agg_matches']:
-                for aggregation_key_value, aggregate_alert_time in rule['aggregate_alert_time'].iteritems():
+                for aggregation_key_value, aggregate_alert_time in rule['aggregate_alert_time'].items():
                     if ts_now() > aggregate_alert_time:
                         alertable_matches = [
                             agg_match
@@ -1862,15 +1862,15 @@ class ElastAlerter():
             if hits_terms is None:
                 top_events_count = {}
             else:
-                buckets = hits_terms.values()[0]
+                buckets = list(hits_terms.values())[0]
 
                 # get_hits_terms adds to num_hits, but we don't want to count these
                 self.num_hits -= len(buckets)
                 terms = {}
                 for bucket in buckets:
                     terms[bucket['key']] = bucket['doc_count']
-                counts = terms.items()
-                counts.sort(key=lambda x: x[1], reverse=True)
+                counts = list(terms.items())
+                sorted(counts, key=lambda x: x[1], reverse=True)
                 top_events_count = dict(counts[:number])
 
             # Save a dict with the top 5 events by key

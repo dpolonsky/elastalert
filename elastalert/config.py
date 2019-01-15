@@ -26,6 +26,7 @@ from util import ts_to_dt
 from util import ts_to_dt_with_format
 from util import unix_to_dt
 from util import unixms_to_dt
+from util import unicode, basestring
 
 # schema for rule yaml
 rule_schema = jsonschema.Draft4Validator(yaml.load(open(os.path.join(os.path.dirname(__file__), 'schema.yaml'))))
@@ -109,7 +110,7 @@ def get_module(module_name):
         base_module = __import__(module_path, globals(), locals(), [module_class])
         module = getattr(base_module, module_class)
     except (ImportError, AttributeError, ValueError) as e:
-        raise EAException("Could not import module %s: %s" % (module_name, e)), None, sys.exc_info()[2]
+        raise EAException("Could not import module %s: %s" % (module_name, e)) #, None, sys.exc_info()[2]
     return module
 
 
@@ -374,7 +375,7 @@ def load_modules(rule, args=None):
     try:
         rule['type'] = rule['type'](rule, args)
     except (KeyError, EAException) as e:
-        raise EAException('Error initializing rule %s: %s' % (rule['name'], e)), None, sys.exc_info()[2]
+        raise EAException('Error initializing rule %s: %s' % (rule['name'], e)) #, None, sys.exc_info()[2]
     # Instantiate alerts only if we're not in debug mode
     # In debug mode alerts are not actually sent so don't bother instantiating them
     if not args or not args.debug:
@@ -434,12 +435,12 @@ def load_alerts(rule, alert_field):
             alert_field = [alert_field]
 
         alert_field = [normalize_config(x) for x in alert_field]
-        alert_field = sorted(alert_field, key=lambda (a, b): alerts_order.get(a, 1))
+        alert_field = sorted(alert_field, key=lambda a_b: alerts_order.get(a_b[0], 1)) #(a, b): alerts_order.get(a, 1))
         # Convert all alerts into Alerter objects
         alert_field = [create_alert(a, b) for a, b in alert_field]
 
     except (KeyError, EAException) as e:
-        raise EAException('Error initiating alert %s: %s' % (rule['alert'], e)), None, sys.exc_info()[2]
+        raise EAException('Error initiating alert %s: %s' % (rule['alert'], e)) #, None, sys.exc_info()[2]
 
     return alert_field
 
@@ -560,7 +561,7 @@ def get_rulefile_hash(rule_file):
     rulefile_hash = ''
     if os.path.exists(rule_file):
         with open(rule_file) as fh:
-            rulefile_hash = hashlib.sha1(fh.read()).digest()
+            rulefile_hash = hashlib.sha1(fh.read().encode('utf-8')).digest()
         for import_rule_file in import_rules.get(rule_file, []):
             rulefile_hash += get_rulefile_hash(import_rule_file)
     return rulefile_hash

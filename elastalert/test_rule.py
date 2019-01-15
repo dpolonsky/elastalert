@@ -203,7 +203,7 @@ class MockElastAlerter(object):
                     buckets.setdefault(doc[key], 0)
                     buckets[doc[key]] += 1
         counts = buckets.items()
-        counts.sort(key=lambda x: x[1], reverse=True)
+        sorted(counts, key=lambda x: x[1], reverse=True)
         if size:
             counts = counts[:size]
         buckets = [{'key': value, 'doc_count': count} for value, count in counts]
@@ -233,7 +233,7 @@ class MockElastAlerter(object):
             if not self.data:
                 return None
             try:
-                self.data.sort(key=lambda x: x[timestamp_field])
+                sorted(self.data, key=lambda x: x[timestamp_field])
                 starttime = ts_to_dt(self.data[0][timestamp_field])
                 endtime = self.data[-1][timestamp_field]
                 endtime = ts_to_dt(endtime) + datetime.timedelta(seconds=1)

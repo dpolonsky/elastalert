@@ -82,7 +82,7 @@ def main():
         password = args.password if args.password else None
         aws_region = args.aws_region
         host = args.host if args.host else raw_input('Enter Elasticsearch host: ')
-        port = args.port if args.port else int(raw_input('Enter Elasticsearch port: '))
+        # port = args.port if args.port else int(raw_input('Enter Elasticsearch port: '))
         use_ssl = (args.ssl if args.ssl is not None
                    else raw_input('Use SSL? t/f: ').lower() in ('t', 'true'))
         if use_ssl:
@@ -113,8 +113,8 @@ def main():
                      aws_region=aws_region,
                      profile_name=args.profile)
     es = Elasticsearch(
-        host=host,
-        port=port,
+        hosts=host,
+        # port=port,
         timeout=timeout,
         use_ssl=use_ssl,
         verify_certs=verify_certs,

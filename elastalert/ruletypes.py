@@ -231,7 +231,7 @@ class FrequencyRule(RuleType):
         self.check_for_match('all')
 
     def add_terms_data(self, terms):
-        for timestamp, buckets in terms.iteritems():
+        for timestamp, buckets in terms.items():
             for bucket in buckets:
                 event = ({self.ts_field: timestamp,
                           self.rules['query_key']: bucket['key']}, bucket['doc_count'])
@@ -274,7 +274,7 @@ class FrequencyRule(RuleType):
     def garbage_collect(self, timestamp):
         """ Remove all occurrence data that is beyond the timeframe away """
         stale_keys = []
-        for key, window in self.occurrences.iteritems():
+        for key, window in self.occurrences.items():
             if timestamp - lookup_es_key(window.data[-1][0], self.ts_field) > self.rules['timeframe']:
                 stale_keys.append(key)
         map(self.occurrences.pop, stale_keys)
@@ -401,11 +401,11 @@ class SpikeRule(RuleType):
         """ Add count data to the rule. Data should be of the form {ts: count}. """
         if len(data) > 1:
             raise EAException('add_count_data can only accept one count at a time')
-        for ts, count in data.iteritems():
+        for ts, count in data.items():
             self.handle_event({self.ts_field: ts}, count, 'all')
 
     def add_terms_data(self, terms):
-        for timestamp, buckets in terms.iteritems():
+        for timestamp, buckets in terms.items():
             for bucket in buckets:
                 count = bucket['doc_count']
                 event = {self.ts_field: timestamp,
@@ -651,7 +651,7 @@ class NewTermsRule(RuleType):
             self.get_all_terms(args)
         except Exception as e:
             # Refuse to start if we cannot get existing terms
-            raise EAException('Error searching for existing terms: %s' % (repr(e))), None, sys.exc_info()[2]
+            raise EAException('Error searching for existing terms: %s' % (repr(e))) #, None, sys.exc_info()[2]
 
     def get_all_terms(self, args):
         """ Performs a terms aggregation for each field to get every existing term. """
@@ -732,7 +732,7 @@ class NewTermsRule(RuleType):
                 time_filter[self.rules['timestamp_field']] = {'lt': self.rules['dt_to_ts'](tmp_end),
                                                               'gte': self.rules['dt_to_ts'](tmp_start)}
 
-            for key, values in self.seen_values.iteritems():
+            for key, values in self.seen_values.items():
                 if not values:
                     if type(key) == tuple:
                         # If we don't have any results, it could either be because of the absence of any baseline data
@@ -880,7 +880,7 @@ class NewTermsRule(RuleType):
     def add_terms_data(self, terms):
         # With terms query, len(self.fields) is always 1 and the 0'th entry is always a string
         field = self.fields[0]
-        for timestamp, buckets in terms.iteritems():
+        for timestamp, buckets in terms.items():
             for bucket in buckets:
                 if bucket['doc_count']:
                     if bucket['key'] not in self.seen_values[field]:
@@ -998,7 +998,7 @@ class BaseAggregationRule(RuleType):
         raise NotImplementedError()
 
     def add_aggregation_data(self, payload):
-        for timestamp, payload_data in payload.iteritems():
+        for timestamp, payload_data in payload.items():
             if 'interval_aggs' in payload_data:
                 self.unwrap_interval_buckets(timestamp, None, payload_data['interval_aggs']['buckets'])
             elif 'bucket_aggs' in payload_data:

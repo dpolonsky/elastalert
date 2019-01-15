@@ -41,7 +41,7 @@ def generate_hits(timestamps, **kwargs):
                 '_source': {'@timestamp': ts},
                 '_type': 'logs',
                 '_index': 'idx'}
-        for key, item in kwargs.iteritems():
+        for key, item in kwargs.items():
             data['_source'][key] = item
         # emulate process_hits(), add metadata to _source
         for field in ['_id', '_type', '_index']:
